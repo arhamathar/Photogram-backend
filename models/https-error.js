@@ -1,3 +1,4 @@
+//model is a blue print 
 class HttpError extends Error {
   constructor(message, errorCode) {
     super(message);
