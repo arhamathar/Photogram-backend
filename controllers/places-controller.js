@@ -1,9 +1,9 @@
-
 // All the logic is in controllers folder.
 const HttpError = require('../models/https-error');
 const { v4: uuidv4 } = require('uuid');
+const { validationResult } = require('express-validator');
 
-const DUMMY_PLACE = [
+let DUMMY_PLACE = [
   {
     id: "p1",
     title: "Empire States Building",
@@ -17,11 +17,11 @@ const DUMMY_PLACE = [
   }
 ];
 
-const getPlacesById = (req, res, next) => {
+const getPlaceById = (req, res, next) => {
   const placeId = req.params.pid;
   const place = DUMMY_PLACE.find(p => {
     return p.id === placeId;
-  })
+  });
   // if (!place) {
   //   const error = new Error('Could not find place for the provided id.')
   //   error.code = 404;
@@ -31,7 +31,7 @@ const getPlacesById = (req, res, next) => {
   if (!place) {
     throw new HttpError('Could not find place for the provided id.', 404);
   }
-  res.json({ place }); //{place: place} if key and value are equal;
+  res.status(200).json({ place }); //{place: place} if key and value are equal;
 };
 
 function getPlacesByUserId(req, res, next) {
@@ -47,6 +47,11 @@ function getPlacesByUserId(req, res, next) {
 }
 
 const createPlace = (req, res, next) => {
+  const error = validationResult(req);
+  if (!error.isEmpty()) {
+    throw new HttpError("Invalid data entered, please enter valid data.", 422);
+
+  }
   const { title, description, coordinates, address, creator } = req.body;
   const createdPlace = {
     id: uuidv4(),
@@ -58,9 +63,36 @@ const createPlace = (req, res, next) => {
   };
   DUMMY_PLACE.push(createdPlace);
   res.status(201);
-  res.json({ createdPlace });
+  res.json({ place: createdPlace });
 };
 
-exports.getPlacesById = getPlacesById;
+const updatePlace = (req, res, next) => {
+  const { title, description } = req.body;
+  const placeId = req.params.pid;
+  const updatedPlace =
+    DUMMY_PLACE.find(p => {
+      return p.id === placeId;
+    });
+  const placeIndex = DUMMY_PLACE.indexOf(p => {
+    return p.id === placeId;
+  });
+  updatedPlace.title = title;
+  updatedPlace.description = description;
+  DUMMY_PLACE[placeIndex] = updatedPlace;
+  res.status(200).json({ place: updatedPlace });
+
+};
+
+const deletePlace = (req, res, next) => {
+  const placeId = req.params.pid;
+  DUMMY_PLACE = DUMMY_PLACE.filter(p => {
+    return p.id !== placeId;
+  });
+  res.status(200).json({ message: "Place Deleted!" })
+};
+
+exports.getPlaceById = getPlaceById;
 exports.getPlacesByUserId = getPlacesByUserId;
 exports.createPlace = createPlace;
+exports.updatePlace = updatePlace;
+exports.deletePlace = deletePlace;

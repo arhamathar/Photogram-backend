@@ -1,16 +1,21 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 
-const placeRoutes = require('./routes/places-route');
-const userRoutes = require('./routes/users-route');
+const HttpError = require('./models/https-error');
+const placesRoutes = require('./routes/places-route');
+const usersRoutes = require('./routes/users-route');
 
 const app = express();
 
 app.use(bodyParser.json());
 
-app.use("/api/places", placeRoutes);
+app.use("/api/places", placesRoutes);
 
-app.use("/api/users", userRoutes);
+app.use("/api/users", usersRoutes);
+
+app.use((req, res, next) => {
+  throw new HttpError("Route not defined", 404);
+});
 
 //a middleware func with 4 arguments is a special function resposible for error handling.
 app.use((error, req, res, next) => {
