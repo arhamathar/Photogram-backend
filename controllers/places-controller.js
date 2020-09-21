@@ -2,6 +2,7 @@
 const HttpError = require('../models/https-error');
 const { v4: uuidv4 } = require('uuid');
 const { validationResult } = require('express-validator');
+const getCoordinates = require('../util/location');
 
 let DUMMY_PLACE = [
   {
@@ -10,7 +11,7 @@ let DUMMY_PLACE = [
     description: "One of the most famous building in the world.",
     location: {
       lat: "40",
-      lng: "-70"
+      lon: "-70"
     },
     address: "New York",
     creator: "u1"
@@ -46,13 +47,18 @@ function getPlacesByUserId(req, res, next) {
   res.json({ place })
 }
 
-const createPlace = (req, res, next) => {
+const createPlace = async (req, res, next) => {
   const error = validationResult(req);
   if (!error.isEmpty()) {
     throw new HttpError("Invalid data entered, please enter valid data.", 422);
-
   }
-  const { title, description, coordinates, address, creator } = req.body;
+  const { title, description, address, creator } = req.body;
+  let coordinates = await getCoordinates(address);
+  console.log(coordinates)
+  // console.log("*******************************");
+  // console.log(coordinates);
+  // console.log("******************************************************");
+
   const createdPlace = {
     id: uuidv4(),
     title,
