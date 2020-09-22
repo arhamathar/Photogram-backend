@@ -1,5 +1,7 @@
+require('dotenv').config();
 const express = require('express');
 const bodyParser = require('body-parser');
+const mongoose = require('mongoose');
 
 const HttpError = require('./models/https-error');
 const placesRoutes = require('./routes/places-route');
@@ -26,6 +28,11 @@ app.use((error, req, res, next) => {
   res.json({ message: error.message || "An unknown error occured." })
 });
 
-app.listen(3000, () => {
-  console.log("Server running at port 3000.")
-})
+mongoose.connect(`mongodb+srv://athararham:${process.env.MONGODB_USER_KEY}@cluster0.ybatv.mongodb.net/first_mernDB?retryWrites=true&w=majority`,
+  { useNewUrlParser: true, useUnifiedTopology: true }).then(() => {
+    app.listen(3000, () => {
+      console.log("Server running at port 3000.")
+    })
+  }).catch(err => {
+    console.log(err);
+  });
