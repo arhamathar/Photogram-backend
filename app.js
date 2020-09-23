@@ -29,7 +29,7 @@ app.use((error, req, res, next) => {
 });
 
 mongoose.connect(`mongodb+srv://athararham:${process.env.MONGODB_USER_KEY}@cluster0.ybatv.mongodb.net/first_mernDB?retryWrites=true&w=majority`,
-  { useNewUrlParser: true, useUnifiedTopology: true }).then(() => {
+  { useNewUrlParser: true, useUnifiedTopology: true, useCreateIndex: true }).then(() => {
     app.listen(3000, () => {
       console.log("Server running at port 3000.")
     })

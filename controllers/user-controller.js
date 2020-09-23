@@ -1,6 +1,8 @@
 const { v4: uuidv4 } = require('uuid');
-const HttpError = require('../models/https-error');
 const { check, validationResult } = require('express-validator');
+
+const HttpError = require('../models/https-error');
+const User = require('../models/user-model');
 
 const DUMMY_USERS = [
   {
@@ -11,44 +13,69 @@ const DUMMY_USERS = [
   }
 ];
 
-const getUsers = (req, res, next) => {
-  res.status(200).json({ user: DUMMY_USERS });
+/*///////////******** Getting all users. ********\\\\\\\\\\\\\ */
+
+const getUsers = async (req, res, next) => {
+  let users;
+  try {
+    users = await User.find({}, "name, email");
+  } catch (error) {
+    return next(new HttpError('Fetching users failed, please try again later.'));
+  }
+  res.status(200).json({ user: users });
 };
 
-const userSignup = (req, res, next) => {
+/*///////////******** Sign Up User. ********\\\\\\\\\\\\\ */
+
+const userSignup = async (req, res, next) => {
   const error = validationResult(req);
   if (!error.isEmpty()) {
-    throw new HttpError('Invalid data entered, please enter data correctly', 422);
     console.log(error);
-  }
+    return next(new HttpError('Invalid data entered, please enter data correctly', 422));
 
-  const { username, email, password } = req.body;
-  const hasUser = DUMMY_USERS.find(u => {
-    return u.username === username;
-  });
-  if (hasUser) {
-    throw new HttpError("Could not create new user, user already exists.", 422);
   }
-  const newUser = {
-    id: uuidv4(),
-    username,
+  const { name, email, password, places } = req.body;
+  let hasUser;
+  try {
+    hasUser = await User.findOne({ email })
+  } catch (error) {
+    return next(new HttpError("Signed Up failed, please try again !", 500));
+  }
+  if (hasUser) {
+    return next(new HttpError("Signed Up failed, user already exists.", 422));
+  }
+  const newUser = new User({
+    name,
     email,
-    password
-  };
-  DUMMY_USERS.push(newUser);
+    password,
+    image: "https://image.shutterstock.com/image-photo/bright-spring-view-cameo-island-260nw-1048185397.jpg",
+    places
+  });
+  try {
+    await newUser.save();
+  } catch (error) {
+    return next(new HttpError('Creating new user failed, please try again!', 500));
+  }
   res.status(201).json({ newUser: newUser });
 };
 
-const userLogin = (req, res, next) => {
+/*///////////******** Login User . ********\\\\\\\\\\\\\ */
+
+const userLogin = async (req, res, next) => {
   const { email, password } = req.body;
-  const identifiedUser = DUMMY_USERS.find(u => {
-    return u.email === email;
-  });
+  let identifiedUser;
+  try {
+    identifiedUser = await User.findOne({ email })
+  } catch (error) {
+    return next(new HttpError("Signed Up failed, please try again !", 500));
+  }
   if (!identifiedUser || identifiedUser.password !== password) {
-    throw new HttpError("User not found , check credentials", 404);
+    return next(new HttpError("User not found , please check credentials", 404));
   }
   res.status(200).json({ status: "Logged In" })
 };
+
+/*///////////******** Exporting all functions. ********\\\\\\\\\\\\\ */
 
 exports.getUsers = getUsers;
 exports.userSignup = userSignup;
