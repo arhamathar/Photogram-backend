@@ -34,7 +34,7 @@ const userSignup = async (req, res, next) => {
     return next(new HttpError('Invalid data entered, please enter data correctly', 422));
 
   }
-  const { name, email, password, places } = req.body;
+  const { name, email, password } = req.body;
   let hasUser;
   try {
     hasUser = await User.findOne({ email })
@@ -49,7 +49,7 @@ const userSignup = async (req, res, next) => {
     email,
     password,
     image: "https://image.shutterstock.com/image-photo/bright-spring-view-cameo-island-260nw-1048185397.jpg",
-    places
+    places: []
   });
   try {
     await newUser.save();

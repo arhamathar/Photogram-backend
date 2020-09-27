@@ -1,11 +1,13 @@
 // All the logic is in controllers folder.
 
+const mongoose = require('mongoose');
 const { v4: uuidv4 } = require('uuid');
 const { validationResult } = require('express-validator');
 
 const HttpError = require('../models/https-error');
 const getCoordinates = require('../util/location');
 const Place = require('../models/places-model');
+const User = require('../models/user-model');
 
 /* ///////////********** Getting place by place id ***********\\\\\\\\\\\\\*/
 
@@ -64,8 +66,24 @@ const createPlace = async (req, res, next) => {
     creator,
     image: "https://image.shutterstock.com/image-photo/bright-spring-view-cameo-island-260nw-1048185397.jpg"
   });
+
+  let user;
   try {
-    await createdPlace.save();
+    user = await User.findById(creator);
+  } catch (error) {
+    return next(new HttpError('Creating new place failed, please try again!', 500));
+  }
+  if (!user) {
+    return next(new HttpError('Could not find user for the provided ID.', 404));
+  }
+
+  try {
+    const sess = await mongoose.startSession();
+    sess.startTransaction();
+    await createdPlace.save({ session: sess });
+    user.places.push(createdPlace);
+    await user.save({ session: sess });
+    await sess.commitTransaction();
   } catch (error) {
     return next(new HttpError('Creating new place failed, please try again!', 500));
   }
@@ -104,12 +122,22 @@ const deletePlace = async (req, res, next) => {
   } catch (error) {
     return next(new HttpError('Something went wrong, could not find the place.', 500));
   }
+
+  if (!place) {
+    return next(new HttpError('Could not find the place for the given Id.', 500));
+  }
+
   try {
-    await place.remove();
+    const sess = await mongoose.startSession();
+    sess.startTransaction();
+    await place.remove({ session: sess });
+    place.creator.places.pull(creator);
+    await place.creator.save({ session: sess });
+    await sess.commitTransaction();
   } catch (err) {
     return next(new HttpError('Could not delete place, please try again later!', 500));
   }
-  res.status(200).json({ message: "Place Deleted!" })
+  res.status(200).json({ message: "Place Deleted!" });
 };
 
 /*///////////******** Exporting all functions. ********\\\\\\\\\\\\\ */

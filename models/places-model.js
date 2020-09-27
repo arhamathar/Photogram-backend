@@ -9,7 +9,7 @@ const placeSchema = new mongoose.Schema({
   },
   image: { type: String, required: 1 },
   address: { type: String, required: true },
-  creator: { type: String, required: true }
+  creator: { type: mongoose.Types.ObjectId, required: true, ref: 'User' }
 });
 
 module.exports = mongoose.model('Place', placeSchema);
