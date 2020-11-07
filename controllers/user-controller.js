@@ -67,7 +67,7 @@ const userLogin = async (req, res, next) => {
   try {
     identifiedUser = await User.findOne({ email })
   } catch (error) {
-    return next(new HttpError("Signed Up failed, please try again !", 500));
+    return next(new HttpError("Logging In failed, please try again !", 500));
   }
   if (!identifiedUser || identifiedUser.password !== password) {
     return next(new HttpError("User not found , please check credentials", 404));

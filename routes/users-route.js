@@ -10,7 +10,7 @@ router.get("/", usersController.getUsers);
 router.post("/signup", [
   check("email").isEmail().normalizeEmail(),
   check("name").not().isEmpty(),
-  check("password").isLength({ min: 6 }).isAlphanumeric()],
+  check("password").isLength({ min: 5 }).isAlphanumeric()],
   usersController.userSignup);
 
 router.post("/login", usersController.userLogin);
