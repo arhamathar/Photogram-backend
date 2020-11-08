@@ -9,7 +9,7 @@ router.get("/", usersController.getUsers);
 
 router.post("/signup", [
   check("email").isEmail().normalizeEmail(),
-  check("name").not().isEmpty(),
+  check("name").notEmpty(),
   check("password").isLength({ min: 5 }).isAlphanumeric()],
   usersController.userSignup);
 
