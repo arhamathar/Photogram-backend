@@ -18,11 +18,12 @@ const DUMMY_USERS = [
 const getUsers = async (req, res, next) => {
   let users;
   try {
-    users = await User.find({}, "name, email");
+    users = await User.find({}, "-password"); // everything except password.
   } catch (error) {
     return next(new HttpError('Fetching users failed, please try again later.'));
   }
-  res.status(200).json({ user: users });
+  // res.status(200).json({ user: users });
+  res.json({ users: users.map(user => user.toObject({ getters: true })) });
 };
 
 /*///////////******** Sign Up User. ********\\\\\\\\\\\\\ */
@@ -56,8 +57,8 @@ const userSignup = async (req, res, next) => {
   } catch (error) {
     return next(new HttpError('Creating new user failed, please try again!', 500));
   }
-  res.status(201).json({ newUser: newUser });
-};
+  res.status(201).json({ newUser: newUser.toObject({ getters: true }) });
+}; // newUser.toObject({ getters: true }) it copy _id field to id field.
 
 /*///////////******** Login User . ********\\\\\\\\\\\\\ */
 
@@ -72,7 +73,10 @@ const userLogin = async (req, res, next) => {
   if (!identifiedUser || identifiedUser.password !== password) {
     return next(new HttpError("User not found , please check credentials", 404));
   }
-  res.status(200).json({ status: "Logged In" })
+  res.status(200).json({
+    status: "Logged In",
+    identifiedUser: identifiedUser.toObject({ getters: true })
+  });
 };
 
 /*///////////******** Exporting all functions. ********\\\\\\\\\\\\\ */

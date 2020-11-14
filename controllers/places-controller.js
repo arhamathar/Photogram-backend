@@ -28,24 +28,25 @@ const getPlaceById = async (req, res, next) => {
   if (!place) {
     throw new HttpError('Could not find place for the provided id.', 404);
   }
-  res.status(200).json({ place }); //{place: place} if key and value are equal;
+  res.status(200).json({ place: place.toObject({ getters: true }) });
 };
 
 /* ///////////********** Getting place by user id ***********\\\\\\\\\\\\\*/
 
 async function getPlacesByUserId(req, res, next) {
   const userId = req.params.uid;
-  let place;
+  let places;
   try {
-    place = await Place.find({ creator: userId });
+    places = await Place.find({ creator: userId });
   } catch (error) {
-    return next(new HttpError('Fetching place failed, please try again later!'), 500);
+    return next(new HttpError('Fetching places failed, please try again later!'), 500);
   }
-  if (!place) {
-    return next(new HttpError('Could not find place for the provided user id .', 404));
+  if (!places) {
+    return next(new HttpError('Could not find places for the provided user id .', 404));
     //next() is used in async js.
   }
-  res.json({ place })
+  // res.json({ places: places })// It also works we only have to use props. _id in place of props.id in userList component
+  res.json({ places: places.map(place => place.toObject({ getters: true })) });
 }
 
 /* ///////////********** Creating new place ***********\\\\\\\\\\\\\*/
@@ -106,7 +107,7 @@ const updatePlace = async (req, res, next) => {
       if (err) {
         return next(new HttpError('Something went wrong, could not update place.', 500));
       } else {
-        console.log("Successfully Updated")
+
       }
     });
   res.status(200).json({ place: "Place updated successfully !" });
@@ -118,7 +119,7 @@ const deletePlace = async (req, res, next) => {
   const placeId = req.params.pid;
   let place;
   try {
-    place = await Place.findById(placeId);
+    place = (await Place.findById(placeId)).populate('creator');
   } catch (error) {
     return next(new HttpError('Something went wrong, could not find the place.', 500));
   }
@@ -131,11 +132,11 @@ const deletePlace = async (req, res, next) => {
     const sess = await mongoose.startSession();
     sess.startTransaction();
     await place.remove({ session: sess });
-    place.creator.places.pull(creator);
+    place.creator.places.pull(place);
     await place.creator.save({ session: sess });
     await sess.commitTransaction();
   } catch (err) {
-    return next(new HttpError('Could not delete place, please try again later!', 500));
+    return next(new HttpError('Could not delete place, please try again later.', 500));
   }
   res.status(200).json({ message: "Place Deleted!" });
 };

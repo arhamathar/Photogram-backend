@@ -38,12 +38,16 @@ app.use((error, req, res, next) => {
   res.json({ message: error.message || "An unknown error occured." })
 });
 
-
-mongoose.connect(`mongodb+srv://athararham:${process.env.MONGODB_USER_KEY}@cluster0.ybatv.mongodb.net/first_mernDB?retryWrites=true&w=majority`,
-  { useNewUrlParser: true, useUnifiedTopology: true, useCreateIndex: true }).then(() => {
-    // console.log("Database Connected!");
-    app.listen(8080, () => {
-      console.log("Server running at port 8080.")
+mongoose.connect(
+  `mongodb+srv://athararham:${process.env.MONGODB_USER_KEY}@cluster0.ybatv.mongodb.net/first_mernDB?retryWrites=true&w=majority`,
+  {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+    useCreateIndex: true
+  }).then(() => {
+    console.log("Database Connected!")
+    app.listen(5000, () => {
+      console.log("Server running at port 5000.")
     });
   }).catch(err => {
     console.log(err);
