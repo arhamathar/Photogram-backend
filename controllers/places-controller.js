@@ -54,8 +54,10 @@ async function getPlacesByUserId(req, res, next) {
 const createPlace = async (req, res, next) => {
   const error = validationResult(req);
   if (!error.isEmpty()) {
-    throw new HttpError("Invalid data entered, please enter valid data.", 422);
+    console.log(error);
+    return next(new HttpError("Invalid data entered, please enter valid data.", 422));
   }
+
   const { title, description, address, creator } = req.body;
   let coordinates = await getCoordinates(address);
 
@@ -65,7 +67,7 @@ const createPlace = async (req, res, next) => {
     location: coordinates,
     address,
     creator,
-    image: "https://image.shutterstock.com/image-photo/bright-spring-view-cameo-island-260nw-1048185397.jpg"
+    image: req.file.path
   });
 
   let user;
@@ -74,6 +76,7 @@ const createPlace = async (req, res, next) => {
   } catch (error) {
     return next(new HttpError('Creating new place failed, please try again!', 500));
   }
+
   if (!user) {
     return next(new HttpError('Could not find user for the provided ID.', 404));
   }
@@ -89,7 +92,8 @@ const createPlace = async (req, res, next) => {
     return next(new HttpError('Creating new place failed, please try again!', 500));
   }
   res.status(201);
-  res.json({ place: createdPlace });
+  // res.json({ place: createdPlace }); this also works! 
+  res.json({ place: createdPlace.toObject({ getters: true }) });
 };
 
 /* ///////////********** Updating place by place id ***********\\\\\\\\\\\\\*/

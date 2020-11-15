@@ -1,4 +1,7 @@
 require('dotenv').config();
+const fs = require('fs');
+const path = require('path');
+
 const express = require('express');
 const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
@@ -10,6 +13,8 @@ const usersRoutes = require('./routes/users-route');
 const app = express();
 
 app.use(bodyParser.json());
+
+app.use('/uploads/images', express.static(path.join('uploads', 'images')));
 
 app.use((req, res, next) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -31,6 +36,12 @@ app.use((req, res, next) => {
 
 //a middleware func with 4 arguments is a special function resposible for error handling.
 app.use((error, req, res, next) => {
+  if (req.file) {
+    fs.unlink(req.file.path, (err) => {
+      console.log(err);
+    }); // path is property that exist in file object.
+  }
+
   if (res.headerSent) {
     return next(error);
   }
