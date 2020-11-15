@@ -1,5 +1,6 @@
 // All the logic is in controllers folder.
 
+const fs = require('fs');
 const mongoose = require('mongoose');
 const { v4: uuidv4 } = require('uuid');
 const { validationResult } = require('express-validator');
@@ -123,7 +124,7 @@ const deletePlace = async (req, res, next) => {
   const placeId = req.params.pid;
   let place;
   try {
-    place = (await Place.findById(placeId)).populate('creator');
+    place = (await Place.findById(placeId));
   } catch (error) {
     return next(new HttpError('Something went wrong, could not find the place.', 500));
   }
@@ -132,16 +133,23 @@ const deletePlace = async (req, res, next) => {
     return next(new HttpError('Could not find the place for the given Id.', 500));
   }
 
+  const imagePath = place.image;
+  const user = await User.findById(place.creator);
+
   try {
     const sess = await mongoose.startSession();
     sess.startTransaction();
     await place.remove({ session: sess });
-    place.creator.places.pull(place);
-    await place.creator.save({ session: sess });
+    user.places.remove(place);
+    await user.save({ session: sess });
     await sess.commitTransaction();
   } catch (err) {
     return next(new HttpError('Could not delete place, please try again later.', 500));
   }
+
+  fs.unlink(imagePath, err => {
+    console.log(err);
+  });
   res.status(200).json({ message: "Place Deleted!" });
 };
 
