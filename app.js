@@ -6,6 +6,7 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
 
+const connectDB = require('./util/connectDb');
 const HttpError = require('./models/https-error');
 const placesRoutes = require('./routes/places-route');
 const usersRoutes = require('./routes/users-route');
@@ -49,17 +50,10 @@ app.use((error, req, res, next) => {
   res.json({ message: error.message || "An unknown error occured." })
 });
 
-mongoose.connect(
-  `mongodb+srv://athararham:${process.env.MONGODB_USER_KEY}@cluster0.ybatv.mongodb.net/first_mernDB?retryWrites=true&w=majority`,
-  {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-    useCreateIndex: true
-  }).then(() => {
-    console.log("Database Connected!")
-    app.listen(5000, () => {
-      console.log("Server running at port 5000.")
-    });
-  }).catch(err => {
-    console.log(err);
+connectDB().then(() => {
+  app.listen(5000, () => {
+    console.log("Server running at port 5000.")
   });
+}).catch(err => {
+  console.log(err);
+});
