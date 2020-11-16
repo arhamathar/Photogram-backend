@@ -55,7 +55,6 @@ async function getPlacesByUserId(req, res, next) {
 const createPlace = async (req, res, next) => {
   const error = validationResult(req);
   if (!error.isEmpty()) {
-    console.log(error);
     return next(new HttpError("Invalid data entered, please enter valid data.", 422));
   }
 
@@ -100,8 +99,25 @@ const createPlace = async (req, res, next) => {
 /* ///////////********** Updating place by place id ***********\\\\\\\\\\\\\*/
 
 const updatePlace = async (req, res, next) => {
+  const error = validationResult(req);
+  if (!error.isEmpty()) {
+    return next(new HttpError("Invalid data entered, please enter valid data.", 422));
+  }
+
   const { title, description } = req.body;
   const placeId = req.params.pid;
+
+  let place;
+  try {
+    place = await Place.findById(placeId);
+  } catch (err) {
+    return next(new HttpError("Something went wrong, could not update place.", 500));
+  }
+
+  if (place.creator.toString() !== req.userData.userId) {
+    return next(new HttpError("You are not allowed to edit this place.", 401));
+  }
+
   const updatedPlace = await Place.updateOne({
     _id: placeId
   },
@@ -111,10 +127,9 @@ const updatePlace = async (req, res, next) => {
     }, function (err) {
       if (err) {
         return next(new HttpError('Something went wrong, could not update place.', 500));
-      } else {
-
       }
     });
+
   res.status(200).json({ place: "Place updated successfully !" });
 };
 
@@ -136,6 +151,10 @@ const deletePlace = async (req, res, next) => {
   const imagePath = place.image;
   const user = await User.findById(place.creator);
 
+  if (req.userData.userId !== user.id) {
+    return next(new HttpError("You are not allowed to delete this place.", 401));
+  }
+
   try {
     const sess = await mongoose.startSession();
     sess.startTransaction();
@@ -150,6 +169,7 @@ const deletePlace = async (req, res, next) => {
   fs.unlink(imagePath, err => {
     console.log(err);
   });
+
   res.status(200).json({ message: "Place Deleted!" });
 };
 

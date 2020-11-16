@@ -26,7 +26,6 @@ const getUsers = async (req, res, next) => {
 const userSignup = async (req, res, next) => {
   const error = validationResult(req);
   if (!error.isEmpty()) {
-    console.log(error);
     return next(new HttpError('Invalid data entered, please enter data correctly', 422));
   }
 
@@ -72,7 +71,7 @@ const userSignup = async (req, res, next) => {
     token = jwt.sign(
       { userId: newUser.id, email: newUser.email },  // data you want to encode into the token
       process.env.SECRET_KEY,
-      { expiresIn: '1h' }
+      { expiresIn: '24h' }
     );
   }
   catch (error) {
@@ -100,7 +99,7 @@ const userLogin = async (req, res, next) => {
   }
 
   if (!identifiedUser) {
-    return next(new HttpError("User not found , please check email.", 401));
+    return next(new HttpError("User not found , please check email.", 403));
   }
 
   let isValidUser = false;
@@ -120,7 +119,7 @@ const userLogin = async (req, res, next) => {
     token = jwt.sign(
       { userId: identifiedUser.id, email: identifiedUser.email },
       process.env.SECRET_KEY,
-      { expiresIn: '1h' }
+      { expiresIn: '24h' }
     );
   }
   catch (err) {
