@@ -69,10 +69,8 @@ const userSignup = async (req, res, next) => {
 
   let token;
   try {
-    token = jwt.sign({
-      userId: newUser.id, // data you want to encode into the token
-      email: newUser.email
-    },
+    token = jwt.sign(
+      { userId: newUser.id, email: newUser.email },  // data you want to encode into the token
       process.env.SECRET_KEY,
       { expiresIn: '1h' }
     );
@@ -119,10 +117,8 @@ const userLogin = async (req, res, next) => {
 
   let token;
   try {
-    token = jwt.sign({
-      userId: identifiedUser.id,
-      email: identifiedUser.email
-    },
+    token = jwt.sign(
+      { userId: identifiedUser.id, email: identifiedUser.email },
       process.env.SECRET_KEY,
       { expiresIn: '1h' }
     );
