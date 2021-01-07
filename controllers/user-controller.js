@@ -2,10 +2,17 @@ const { v4: uuidv4 } = require('uuid');
 const { check, validationResult } = require('express-validator');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const nodemailer = require('nodemailer');
+const sendgridTransport = require('nodemailer-sendgrid-transport');
 
 const HttpError = require('../models/https-error');
 const User = require('../models/user-model');
 
+const transporter = nodemailer.createTransport(sendgridTransport({
+  auth: {
+    api_key: process.env.NODEMAILER_KEY
+  }
+}));
 
 /*///////////******** Getting all users. ********\\\\\\\\\\\\\ */
 
@@ -64,6 +71,18 @@ const userSignup = async (req, res, next) => {
   }
   catch (error) {
     return next(new HttpError('Creating new user failed, please try again!', 500));
+  }
+
+  try {
+    await transporter.sendMail({
+      to: newUser.email,
+      from: "me.rahulsingh789@gmail.com",
+      subject: "Sign up Successful !",
+      html: "<h1>Welcome to PhotoGram</h1>"
+    });
+  } catch (err) {
+    const message = err;
+    return next(new HttpError(message, 500));
   }
 
   let token;
