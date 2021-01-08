@@ -74,18 +74,6 @@ const userSignup = async (req, res, next) => {
     return next(new HttpError('Creating new user failed, please try again!', 500));
   }
 
-  try {
-    await transporter.sendMail({
-      to: newUser.email,
-      from: "me.rahulsingh789@gmail.com",
-      subject: "Sign up Successful !",
-      html: "<h1>Welcome to PhotoGram</h1>"
-    });
-  } catch (err) {
-    const message = err;
-    return next(new HttpError(message, 500));
-  }
-
   let token;
   try {
     token = jwt.sign(
@@ -96,6 +84,18 @@ const userSignup = async (req, res, next) => {
   }
   catch (error) {
     return next(new HttpError("Signing up failed, please try again lataer", 500));
+  }
+
+  try {
+    await transporter.sendMail({
+      to: newUser.email,
+      from: "me.rahulsingh789@gmail.com",
+      subject: "Sign up Successful !",
+      html: "<h1>Welcome to PhotoGram</h1>"
+    });
+  } catch (err) {
+    const message = err;
+    return next(new HttpError(message, 500));
   }
 
   res.status(201).json({
@@ -176,6 +176,42 @@ const resetPassword = async (req, res, next) => {
     catch (err) {
       return next(new HttpError("Resetting password failed, please try again !", 500));
     }
+
+    if (!user) {
+      return next(new HttpError("User not found , please check email.", 403));
+    }
+
+    user.resetToken = token;
+    user.resetTokenExpiration = new Date() + 3600000;
+
+    try {
+      await user.save();
+    } catch (error) {
+      return next(new HttpError('Resetting password failed, please try again!', 500));
+    }
+
+    try {
+      await transporter.sendMail({
+        to: user.email,
+        from: "me.rahulsingh789@gmail.com",
+        subject: "Reset Password link !",
+        html: `
+            <h4>You're almost ready to reset your password! </h4>
+            <p>Click on the link below to reset your password.</p>
+            <a href="http://http://localhost:3000/reset-password/${token}">Reset Password</a>
+            <p>Cheers,</p>
+            <h5>PhotoGram</h5>
+        `
+      });
+    } catch (err) {
+      const message = err;
+      return next(new HttpError(message, 500));
+    }
+
+    res.json({
+      message: "Plese check your email !",
+      resetToken: token
+    });
   });
 };
 
