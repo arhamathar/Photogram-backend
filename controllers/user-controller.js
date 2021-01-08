@@ -1,5 +1,6 @@
 const { v4: uuidv4 } = require('uuid');
 const { check, validationResult } = require('express-validator');
+const crypto = require('crypto');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const nodemailer = require('nodemailer');
@@ -156,8 +157,33 @@ const userLogin = async (req, res, next) => {
   });
 };
 
+/*////////////////******** Reseting Password . ********\\\\\\\\\\\\\\\\\\\ */
+
+const resetPassword = async (req, res, next) => {
+  crypto.randomBytes(32, async (err, buffer) => {
+    if (err) {
+      console.log(err);
+      return next(err);
+    }
+
+    const token = buffer.toString('hex');
+
+    const email = req.body.email;
+    let user;
+    try {
+      user = await User.findOne({ email });
+    }
+    catch (err) {
+      return next(new HttpError("Resetting password failed, please try again !", 500));
+    }
+  });
+};
+
+
+
 /*///////////******** Exporting all functions. ********\\\\\\\\\\\\\ */
 
 exports.getUsers = getUsers;
 exports.userSignup = userSignup;
 exports.userLogin = userLogin;
+exports.resetPassword = resetPassword;
