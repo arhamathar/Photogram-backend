@@ -157,13 +157,13 @@ const userLogin = async (req, res, next) => {
   });
 };
 
-/*////////////////******** Reseting Password . ********\\\\\\\\\\\\\\\\\\\ */
+/*//////////////// ******** Reseting Password ******** \\\\\\\\\\\\\\\\\\\ */
 
 const resetPassword = async (req, res, next) => {
   crypto.randomBytes(32, async (err, buffer) => {
     if (err) {
-      console.log(err);
-      return next(err);
+      // console.log(err);      
+      return next(new HttpError(err, 422));
     }
 
     const token = buffer.toString('hex');
@@ -182,7 +182,7 @@ const resetPassword = async (req, res, next) => {
     }
 
     user.resetToken = token;
-    user.resetTokenExpiration = new Date() + 3600000;
+    user.resetTokenExpiration = Date.now() + 3600000;
 
     try {
       await user.save();
@@ -198,7 +198,7 @@ const resetPassword = async (req, res, next) => {
         html: `
             <h4>You're almost ready to reset your password! </h4>
             <p>Click on the link below to reset your password.</p>
-            <a href="http://http://localhost:3000/reset-password/${token}">Reset Password</a>
+            <a href="http://http://localhost:3000/auth/reset-password/${token}">Reset Password</a>
             <p>Cheers,</p>
             <h5>PhotoGram</h5>
         `
@@ -216,10 +216,52 @@ const resetPassword = async (req, res, next) => {
 };
 
 
+/*//////////////// ******** New Password ******** \\\\\\\\\\\\\\\\\\\ */
 
-/*///////////******** Exporting all functions. ********\\\\\\\\\\\\\ */
+const newPassword = async (req, res, next) => {
+  const newPassword = req.body.password;
+  const token = req.body.resetToken;
+
+  let user;
+  try {
+    user = await User.findOne({
+      resetToken: token,
+      resetTokenExpiration: { $gt: Date.now() }
+    });
+  } catch (err) {
+    return next(new HttpError("Resetting password failed, please try again !", 500));
+  }
+
+  if (!user) {
+    return next(new HttpError("Session expired, please try again !", 422));
+  }
+
+  let hashedNewPassword;
+  try {
+    hashedNewPassword = await bcrypt.hash(newPassword, 10);
+  }
+  catch (err) {
+
+    return next(new HttpError("Could not change password, please try again!", 500));
+  }
+
+  user.password = hashedNewPassword;
+  user.resetToken = undefined;
+  user.resetTokenExpiration = undefined;
+
+  try {
+    await user.save()
+  } catch (err) {
+    return next(new HttpError(err, 422));
+  }
+  res.status(201).json({ message: "Password updated Successfully !" });
+
+};
+
+/* ///////////******** Exporting all functions. ********\\\\\\\\\\\\\ */
 
 exports.getUsers = getUsers;
 exports.userSignup = userSignup;
 exports.userLogin = userLogin;
 exports.resetPassword = resetPassword;
+exports.newPassword = newPassword;
